@@ -15,7 +15,7 @@ gtNmeaFileName = 'SPAN_Pixel4_10Hz.nmea';
 % 1) copy everything from GitHub androidGnss to 
 %    a local directory on your machine
 % 2) change 'dirName = ...' to match the local directory you are using:
-dirName ='../data/GSDC/MTV/2020-05-14-US-MTV-1';
+dirName ='../data/GSDC/MTV/2020-06-05-US-MTV-2';
 % 3) run ProcessGnssMeasScript.m script file 
 param.llaTrueDegDegM = [];
 
@@ -237,6 +237,26 @@ h = image('XData',[-122.5, -121.8],'YData',[37.7,37.3],'CData',I);%note the lati
 
 uistack(h,'bottom'); %move the image to the bottom of current stack
 saveas(figure1,[dirName,'/Results.fig']);
+
+%% Export Data for BUAA summer school
+f_TimeSvPrM_test = fopen([dirName,'/Measurements_',filename_date,'.csv'],'w');
+fprintf(f_TimeSvPrM_test, '%s , %s , %s , %s , %s, %s, %s , %s , %s, %s\n','Epoch', 'PRN', 'SvX', 'SvY', 'SvZ','PrM', 'PrSigmaM', 'GTx', 'GTy', 'GTz');
+NumSvPosR = size(gpsPvt.SvPosR, 1);
+for m = 1:NumSvPosR   
+    n = gpsPvt.SvPosR(m, 1);
+    if n < tRx_i
+        % There is no ground truth for the measurements before tRx_i
+        continue;
+    end
+    
+    % Groundtruth
+    GroundTruthXyz = [GroundTruth0(n-tRx_i+1,7), GroundTruth0(n-tRx_i+1,8), GroundTruth0(n-tRx_i+1,9)];
+
+    A = [gpsPvt.SvPosR(m,1), gpsPvt.SvPosR(m,3:6), gpsPvt.SvPosR(m,11), gpsPvt.SvPosR(m,15), GroundTruthXyz];
+    fprintf(f_TimeSvPrM_test,'%d , %d , %f , %f , %f , %f, %f, %f, %f, %f\n',A');  
+end
+
+fclose(f_TimeSvPrM_test);
 
 
 %% Calculate the positioning errors
